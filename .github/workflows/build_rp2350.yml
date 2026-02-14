@@ -1,4 +1,4 @@
-name: Build RP2350 LVGL Firmware (With LCD_BUS)
+name: Build RP2350 LVGL Firmware (The Hemonu Fix)
 
 on:
   workflow_dispatch:
@@ -10,7 +10,8 @@ jobs:
     - name: Checkout Repository
       uses: actions/checkout@v4
       with:
-        repository: lvgl-micropython/lvgl_micropython
+        repository: hemonu/lvgl_micropython
+        ref: rp2-fix
 
     - name: Set up Python
       uses: actions/setup-python@v5
@@ -28,11 +29,10 @@ jobs:
 
     - name: Compile Firmware via make.py
       run: |
-        python3 make.py rp2 submodules clean mpy_cross BOARD=RPI_PICO2 DISPLAY=st7789
+        python3 make.py rp2 -submodules -clean -mpy_cross BOARD=RPI_PICO2 DISPLAY=st7789
 
     - name: Upload UF2 Artifact
       uses: actions/upload-artifact@v4
       with:
         name: micropython-lvgl-rp2350-lcdbus
-        # Uses a wildcard to grab the UF2 file no matter where make.py hides it
         path: '**/*.uf2'
