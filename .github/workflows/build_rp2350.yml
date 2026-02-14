@@ -5,7 +5,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v4
@@ -14,10 +14,19 @@ jobs:
         ref: master
         submodules: recursive
 
-    - name: Install Build Dependencies
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: Install System Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y gcc-arm-none-eabi build-essential cmake doxygen python3-pycparser
+        sudo apt-get install -y build-essential cmake gcc-arm-none-eabi libnewlib-arm-none-eabi doxygen pkg-config libusb-1.0-0-dev
+
+    - name: Install Python Dependencies
+      run: |
+        pip install pyelftools pycparser
 
     - name: Build mpy-cross
       run: make -j4 -C mpy-cross
@@ -26,7 +35,7 @@ jobs:
       run: make -C ports/rp2 BOARD=RPI_PICO2 submodules
 
     - name: Compile Firmware
-      run: make -j4 -C ports/rp2 BOARD=RPI_PICO2 USER_C_MODULES=../../lib/lv_bindings/bindings.cmake
+      run: make -j4 -C ports/rp2 BOARD=RPI_PICO2 USER_C_MODULES=${GITHUB_WORKSPACE}/lib/lv_bindings/bindings.cmake
 
     - name: Upload UF2 Artifact
       uses: actions/upload-artifact@v4
