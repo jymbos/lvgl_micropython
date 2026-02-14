@@ -1,4 +1,4 @@
-name: Build RP2350 LVGL Firmware (Final Path Patch)
+name: Build RP2350 LVGL Firmware (V9 Final Fix)
 
 on:
   workflow_dispatch:
@@ -10,8 +10,8 @@ jobs:
     - name: Checkout Repository
       uses: actions/checkout@v4
       with:
-        repository: lvgl-micropython/lvgl_micropython
-        ref: main  # <-- THE FIX: Changed from 'master' to 'main'
+        repository: hemonu/lvgl_micropython
+        ref: rp2-fix
         submodules: recursive
 
     - name: Set up Python
@@ -30,12 +30,15 @@ jobs:
 
     - name: Fix Directory Structure (The Surgery)
       run: |
-        # If the gen folder is tucked away in a submodule, we bring it to the root
+        # Fix the missing generator tool by copying it to the root
         if [ -d "lib/lv_bindings/gen" ]; then cp -r lib/lv_bindings/gen .; fi
+        
+        # Add the bindings folder to the Python path so the compiler can see it
         export PYTHONPATH=$PYTHONPATH:$(pwd)/lib/lv_bindings
 
     - name: Compile Firmware via make.py
       run: |
+        # Compile with the ST7789 driver enabled
         python3 make.py rp2 submodules mpy_cross BOARD=RPI_PICO2 DISPLAY=st7789
 
     - name: Upload UF2 Artifact
