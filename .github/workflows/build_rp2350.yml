@@ -1,4 +1,4 @@
-name: Build RP2350 LVGL Firmware (The Hemonu Fix)
+name: Build RP2350 LVGL Firmware (Path Patch)
 
 on:
   workflow_dispatch:
@@ -10,8 +10,9 @@ jobs:
     - name: Checkout Repository
       uses: actions/checkout@v4
       with:
-        repository: hemonu/lvgl_micropython
-        ref: rp2-fix
+        repository: lvgl-micropython/lvgl_micropython
+        ref: master
+        submodules: recursive
 
     - name: Set up Python
       uses: actions/setup-python@v5
@@ -27,9 +28,19 @@ jobs:
       run: |
         pip install pyelftools pycparser
 
+    - name: Fix Directory Structure (The Surgery)
+      run: |
+        # The build script expects 'gen/' at the root, but it's inside 'lib/lv_bindings/'
+        # We manually copy it out to satisfy the compiler.
+        cp -r lib/lv_bindings/gen .
+        
+        # We also need the 'lv_binding_micropython' module in the python path
+        export PYTHONPATH=$PYTHONPATH:$(pwd)/lib/lv_bindings
+
     - name: Compile Firmware via make.py
       run: |
-        python3 make.py rp2 -submodules -clean -mpy_cross BOARD=RPI_PICO2 DISPLAY=st7789
+        # We add the "frozen_content" flag to ensure scripts are packed correctly
+        python3 make.py rp2 submodules mpy_cross BOARD=RPI_PICO2 DISPLAY=st7789
 
     - name: Upload UF2 Artifact
       uses: actions/upload-artifact@v4
