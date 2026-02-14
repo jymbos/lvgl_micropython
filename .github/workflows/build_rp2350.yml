@@ -1,4 +1,4 @@
-name: Build RP2350 LVGL Firmware (Path Patch)
+name: Build RP2350 LVGL Firmware (Final Path Patch)
 
 on:
   workflow_dispatch:
@@ -11,7 +11,7 @@ jobs:
       uses: actions/checkout@v4
       with:
         repository: lvgl-micropython/lvgl_micropython
-        ref: master
+        ref: main  # <-- THE FIX: Changed from 'master' to 'main'
         submodules: recursive
 
     - name: Set up Python
@@ -30,16 +30,12 @@ jobs:
 
     - name: Fix Directory Structure (The Surgery)
       run: |
-        # The build script expects 'gen/' at the root, but it's inside 'lib/lv_bindings/'
-        # We manually copy it out to satisfy the compiler.
-        cp -r lib/lv_bindings/gen .
-        
-        # We also need the 'lv_binding_micropython' module in the python path
+        # If the gen folder is tucked away in a submodule, we bring it to the root
+        if [ -d "lib/lv_bindings/gen" ]; then cp -r lib/lv_bindings/gen .; fi
         export PYTHONPATH=$PYTHONPATH:$(pwd)/lib/lv_bindings
 
     - name: Compile Firmware via make.py
       run: |
-        # We add the "frozen_content" flag to ensure scripts are packed correctly
         python3 make.py rp2 submodules mpy_cross BOARD=RPI_PICO2 DISPLAY=st7789
 
     - name: Upload UF2 Artifact
