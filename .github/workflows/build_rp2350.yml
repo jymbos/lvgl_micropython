@@ -1,7 +1,7 @@
 name: Build RP2350 LVGL Firmware
 
 on:
-  workflow_dispatch:  # Allows you to click a "Run" button manually
+  workflow_dispatch:
 
 jobs:
   build:
@@ -11,23 +11,22 @@ jobs:
       uses: actions/checkout@v4
       with:
         repository: lvgl/lv_micropython
-        ref: master  # Uses the latest LVGL 9+ binding
+        ref: master
         submodules: recursive
 
-    - name: Install ARM GCC & CMake
+    - name: Install Build Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y gcc-arm-none-eabi build-essential cmake
+        sudo apt-get install -y gcc-arm-none-eabi build-essential cmake doxygen python3-pycparser
 
-    - name: Build mpy-cross (The Cross Compiler)
-      run: make -C mpy-cross
+    - name: Build mpy-cross
+      run: make -j4 -C mpy-cross
 
-    - name: Build Firmware for RP2350 (Pico 2)
-      run: |
-        cd ports/rp2
-        # RP2350 is Board ID: RPI_PICO2
-        # We enable double-precision float and standard LVGL features
-        make BOARD=RPI_PICO2 USER_C_MODULES=../../lib/lv_bindings/bindings.cmake
+    - name: Fetch Pico SDK Submodules
+      run: make -C ports/rp2 BOARD=RPI_PICO2 submodules
+
+    - name: Compile Firmware
+      run: make -j4 -C ports/rp2 BOARD=RPI_PICO2 USER_C_MODULES=../../lib/lv_bindings/bindings.cmake
 
     - name: Upload UF2 Artifact
       uses: actions/upload-artifact@v4
