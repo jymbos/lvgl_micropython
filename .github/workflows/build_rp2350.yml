@@ -1,4 +1,4 @@
-name: Build RP2350 LVGL Firmware
+name: Build RP2350 LVGL Firmware (With LCD_BUS)
 
 on:
   workflow_dispatch:
@@ -10,9 +10,7 @@ jobs:
     - name: Checkout Repository
       uses: actions/checkout@v4
       with:
-        repository: lvgl/lv_micropython
-        ref: master
-        submodules: recursive
+        repository: lvgl-micropython/lvgl_micropython
 
     - name: Set up Python
       uses: actions/setup-python@v5
@@ -22,23 +20,19 @@ jobs:
     - name: Install System Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential cmake gcc-arm-none-eabi libnewlib-arm-none-eabi doxygen pkg-config libusb-1.0-0-dev
+        sudo apt-get install -y build-essential cmake gcc-arm-none-eabi libnewlib-arm-none-eabi doxygen pkg-config libusb-1.0-0-dev ninja-build
 
     - name: Install Python Dependencies
       run: |
         pip install pyelftools pycparser
 
-    - name: Build mpy-cross
-      run: make -j4 -C mpy-cross
-
-    - name: Fetch Pico SDK Submodules
-      run: make -C ports/rp2 BOARD=RPI_PICO2 USER_C_MODULES=../../user_modules/lv_binding_micropython/bindings.cmake submodules
-
-    - name: Compile Firmware
-      run: make -j4 -C ports/rp2 BOARD=RPI_PICO2 USER_C_MODULES=../../user_modules/lv_binding_micropython/bindings.cmake
+    - name: Compile Firmware via make.py
+      run: |
+        python3 make.py rp2 submodules clean mpy_cross BOARD=RPI_PICO2 DISPLAY=st7789
 
     - name: Upload UF2 Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: micropython-lvgl-rp2350
-        path: ports/rp2/build-RPI_PICO2/firmware.uf2
+        name: micropython-lvgl-rp2350-lcdbus
+        # Uses a wildcard to grab the UF2 file no matter where make.py hides it
+        path: '**/*.uf2'
