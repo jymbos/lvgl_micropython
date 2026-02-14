@@ -32,10 +32,10 @@ jobs:
       run: make -j4 -C mpy-cross
 
     - name: Fetch Pico SDK Submodules
-      run: make -C ports/rp2 BOARD=RPI_PICO2 submodules
+      run: make -C ports/rp2 BOARD=RPI_PICO2 USER_C_MODULES=../../user_modules/lv_binding_micropython/bindings.cmake submodules
 
     - name: Compile Firmware
-      run: make -j4 -C ports/rp2 BOARD=RPI_PICO2 USER_C_MODULES=${GITHUB_WORKSPACE}/lib/lv_bindings/bindings.cmake
+      run: make -j4 -C ports/rp2 BOARD=RPI_PICO2 USER_C_MODULES=../../user_modules/lv_binding_micropython/bindings.cmake
 
     - name: Upload UF2 Artifact
       uses: actions/upload-artifact@v4
